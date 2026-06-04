@@ -36,37 +36,36 @@ Triển khai **OpenClaw Gateway** tích hợp **Google Chat channel**, **Tailsca
 
 ---
 
-## Cài đặt nhanh
+## Bắt đầu trên VPS mới (Ubuntu/Debian)
 
 ```bash
-# 1. Clone repo
-git clone <repo-url> setup-agentic
-cd setup-agentic
+# 1. Cài Docker (nếu chưa có)
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+newgrp docker
 
-# 2. Chạy setup (sinh token, tạo thư mục)
+# 2. Clone repo
+git clone <repo-url> setup-agentic && cd setup-agentic
+
+# 3. Chạy wizard — làm theo từng bước
 ./scripts/setup.sh
-
-# 3. Copy service account JSON
-cp /đường/dẫn/googlechat-service-account.json data/openclaw/
-
-# 4. Sửa config — thay thế placeholder trong data/openclaw/openclaw.json
-#    - __YOUR_EMAIL__     → email Codex/OpenAI
-#    - __YOUR_HOSTNAME__  → public hostname (VD: openclaw-gw.tailxxxx.ts.net)
-#    - __YOUR_CLIENT_ID__ → client_id từ service account JSON
-
-# 5. Sửa .env — điền TS_AUTHKEY (Tailscale auth key)
-
-# 6. Pull image + khởi động
-docker compose pull
-docker compose up -d
-
-# 7. Đợi ~30s, kiểm tra trạng thái
-docker compose ps
-./scripts/tsctl.sh status
-
-# 8. Authorize Tailscale Funnel
-./scripts/tsctl.sh auth
 ```
+
+**Thế thôi.** Script sẽ hỏi bạn từng thứ một:
+- Dán Tailscale auth key (vào tailscale.com lấy trước)
+- Chạy onboarding OpenClaw (dán API key Codex/OpenCode)
+- Đường dẫn file JSON Google Chat (upload lên VPS trước)
+- Email + hostname + client_id
+
+Sau khi script chạy xong, tất cả services đã up, funnel đã được nhắc authorize.
+
+### Cần chuẩn bị trước
+
+| Thứ cần có | Lấy ở đâu |
+|------------|-----------|
+| Tailscale auth key | https://login.tailscale.com/admin/settings/keys → Generate key |
+| Codex/OpenCode API key | Dashboard của provider |
+| Google Chat SA JSON | Google Cloud Console → Service Accounts → Key → JSON → Upload lên VPS |
 
 ---
 
@@ -74,7 +73,7 @@ docker compose ps
 
 ```
 setup-agentic/
-├── docker-compose.yml              # Orchestration cho 2 services
+├── docker-compose.yml              # Orchestration cho 3 services + 1 CLI
 ├── .env.template                   # Template biến môi trường
 ├── .env                            # Biến môi trường thực (gitignored)
 ├── Makefile                        # Shortcuts: make up/down/logs...
@@ -85,7 +84,7 @@ setup-agentic/
 │   └── googlechat-service-account.json.example
 │
 ├── scripts/
-│   ├── setup.sh                    # Cài đặt ban đầu (sinh token, copy config)
+│   ├── setup.sh                    # Wizard tương tác — chạy 1 file, làm hết
 │   ├── entrypoint-tailscale.sh     # Tailscale entrypoint
 │   ├── tsctl.sh                    # Quản lý Tailscale
 │   └── tunnel.sh                   # SSH tunnel helper
@@ -107,6 +106,7 @@ setup-agentic/
 
 ```bash
 make help              # Hiển thị tất cả lệnh
+make setup             # Chạy wizard cài đặt (tương tác từng bước)
 make up                # Khởi động 3 services
 make down              # Dừng services
 make restart           # Khởi động lại
@@ -166,33 +166,6 @@ Tóm tắt các bước:
 3. Tạo Google Chat App → HTTP endpoint URL = `https://<hostname>/googlechat`
 4. Set App Status = Live
 5. Copy JSON vào `data/openclaw/googlechat-service-account.json`
-
----
-
-## Triển khai lên máy chủ Linux từ xa
-
-### Cách 1: Git clone
-
-```bash
-# Trên máy chủ Linux
-git clone <repo-url> setup-agentic
-cd setup-agentic
-./scripts/setup.sh
-# Sửa .env và config...
-docker compose up -d
-```
-
-### Cách 2: SCP toàn bộ thư mục
-
-```bash
-# Từ máy local
-scp -r setup-agentic/ user@remote-host:~/setup-agentic/
-
-# Trên máy chủ Linux
-cd ~/setup-agentic
-./scripts/setup.sh
-docker compose up -d
-```
 
 ---
 

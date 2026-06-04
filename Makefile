@@ -1,9 +1,10 @@
-.PHONY: help setup up down restart logs status clean pull shell-openclaw shell-tailscale shell-n8n tailscale-status tailscale-auth
+.PHONY: help setup onboard up down restart logs status clean pull shell-openclaw shell-tailscale shell-n8n tailscale-status tailscale-auth
 
 help:
 	@echo "OpenClaw + Tailscale + n8n Docker Environment"
 	@echo ""
 	@echo "  make setup             Cài đặt ban đầu (sinh token, copy config)"
+	@echo "  make onboard           Chạy wizard onboarding (thêm API key)"
 	@echo "  make up                Khởi động toàn bộ services"
 	@echo "  make down              Dừng toàn bộ services"
 	@echo "  make restart           Khởi động lại"
@@ -23,6 +24,12 @@ help:
 
 setup:
 	./scripts/setup.sh
+
+onboard:
+	@echo "==> OpenClaw Onboarding (tương tác)"
+	@echo "    Sẽ hỏi: bind mode, auth token, provider keys..."
+	@echo ""
+	docker compose run --rm openclaw-cli onboard --no-install-daemon
 
 up:
 	docker compose up -d
