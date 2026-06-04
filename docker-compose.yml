@@ -1,0 +1,95 @@
+services:
+  openclaw-gateway:
+    image: ${OPENCLAW_IMAGE:-alpine/openclaw:latest}
+    container_name: openclaw-gateway
+    hostname: openclaw
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+    volumes:
+      - ./data/openclaw:/home/node/.openclaw
+      - ./data/openclaw/workspace:/home/node/.openclaw/workspace
+      - ./logs:/tmp/openclaw
+    ports:
+      - "${OPENCLAW_GATEWAY_PORT:-18789}:18789"
+      - "${OPENCLAW_BRIDGE_PORT:-18790}:18790"
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:18789/',r=>{process.exit(r.statusCode===200?0:1)})",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    command:
+      [
+        "sh",
+        "-c",
+        "exec node dist/index.js gateway --bind \"${OPENCLAW_GATEWAY_BIND:-lan}\" --port 18789",
+      ]
+
+  tailscale-proxy:
+    image: tailscale/tailscale:latest
+    container_name: tailscale-proxy
+    hostname: ${TS_HOSTNAME:-openclaw-gw}
+    restart: unless-stopped
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_HOSTNAME=${TS_HOSTNAME:-openclaw-gw}
+      - TS_EXTRA_ARGS=--accept-routes
+      - GATEWAY_ADDR=${TS_GATEWAY_ADDR:-http://127.0.0.1:18789}
+      - SERVE_PORT=${TS_SERVE_PORT:-8443}
+      - FUNNEL_PATH=${TS_FUNNEL_PATH:-/googlechat}
+    volumes:
+      - ./data/tailscale:/var/lib/tailscale
+      - ./scripts/entrypoint-tailscale.sh:/usr/local/bin/entrypoint-tailscale.sh:ro
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    entrypoint: ["/bin/sh", "/usr/local/bin/entrypoint-tailscale.sh"]
+    depends_on:
+      openclaw-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "tailscale", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=${N8N_PORT:-5678}
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - NODE_ENV=production
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - DB_TYPE=sqlite
+      - N8N_USER_FOLDER=/home/node/.n8n
+    volumes:
+      - ./data/n8n:/home/node/.n8n
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes: {}

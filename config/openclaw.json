@@ -1,0 +1,128 @@
+{
+  "agents": {
+    "defaults": {
+      "workspace": "/home/node/.openclaw/workspace",
+      "models": {
+        "openai/gpt-5.5": {},
+        "codex/gpt-5.4": {},
+        "opencode-go/deepseek-v4-flash": {},
+        "opencode-go/qwen3.6-plus": {},
+        "opencode-go/minimax-m2.7": {},
+        "opencode-go/glm-5": {}
+      },
+      "model": {
+        "primary": "codex/gpt-5.4",
+        "fallbacks": [
+          "opencode-go/deepseek-v4-flash",
+          "opencode-go/qwen3.6-plus",
+          "opencode-go/minimax-m2.7",
+          "opencode-go/glm-5"
+        ]
+      }
+    }
+  },
+
+  "gateway": {
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": "__GENERATED_TOKEN__",
+      "allowTailscale": true
+    },
+    "port": 18789,
+    "bind": "loopback",
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "controlUi": {
+      "allowInsecureAuth": true,
+      "dangerouslyDisableDeviceAuth": true,
+      "allowedOrigins": ["*"]
+    },
+    "nodes": {
+      "denyCommands": [
+        "camera.snap",
+        "camera.clip",
+        "screen.record",
+        "contacts.add",
+        "calendar.add",
+        "reminders.add",
+        "sms.send",
+        "sms.search"
+      ]
+    }
+  },
+
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+
+  "tools": {
+    "profile": "coding"
+  },
+
+  "plugins": {
+    "entries": {
+      "openai": { "enabled": true },
+      "codex": { "enabled": true },
+      "googlechat": { "enabled": true },
+      "opencode-go": { "enabled": true }
+    }
+  },
+
+  "auth": {
+    "profiles": {
+      "openai-codex:__YOUR_EMAIL__": {
+        "provider": "openai-codex",
+        "mode": "oauth",
+        "email": "__YOUR_EMAIL__"
+      },
+      "opencode:default": {
+        "provider": "opencode",
+        "mode": "api_key"
+      },
+      "opencode-go:default": {
+        "provider": "opencode-go",
+        "mode": "api_key"
+      }
+    }
+  },
+
+  "channels": {
+    "googlechat": {
+      "enabled": true,
+      "serviceAccountFile": "/home/node/.openclaw/googlechat-service-account.json",
+      "audienceType": "app-url",
+      "audience": "https://__YOUR_HOSTNAME__/googlechat",
+      "appPrincipal": "__YOUR_CLIENT_ID__",
+      "webhookPath": "/googlechat",
+      "webhookUrl": "https://__YOUR_HOSTNAME__/googlechat",
+      "allowBots": false,
+      "dm": {
+        "policy": "pairing"
+      },
+      "groupPolicy": "open",
+      "groups": {},
+      "actions": {
+        "reactions": true
+      }
+    }
+  },
+
+  "wizard": {
+    "lastRunAt": null,
+    "lastRunVersion": null,
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  },
+
+  "meta": {
+    "lastTouchedVersion": null,
+    "lastTouchedAt": null
+  },
+
+  "commands": {
+    "ownerAllowFrom": []
+  }
+}

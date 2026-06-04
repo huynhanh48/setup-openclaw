@@ -1,0 +1,33 @@
+# === Môi trường & Secrets ===
+.env
+*.pem
+*.key
+*-service-account.json
+credentials/
+identity/
+
+# === Dữ liệu runtime ===
+data/
+logs/
+/tmp/
+
+# === Backup config ===
+*.bak
+*.bak.*
+*.last-good
+
+# === Docker ===
+docker-compose.override.yml
+
+# === OS junk ===
+.DS_Store
+Thumbs.db
+
+# === IDE ===
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# === Node modules (nếu ai build local) ===
+node_modules/
